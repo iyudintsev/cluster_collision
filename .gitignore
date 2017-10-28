@@ -1,0 +1,5 @@
+/Eigen
+*.txt
+*.o
+model
+test
