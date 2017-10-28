@@ -1,0 +1,16 @@
+CC=g++
+CFLAGS=-c -Wall -I.
+
+all: test
+
+test: test.o potential.o
+	$(CC) test.o potential.o -o test
+
+test.o: test.cpp
+	$(CC) $(CFLAGS) test.cpp
+
+potential.o: potential.cpp
+	$(CC) $(CFLAGS) potential.cpp
+
+clean:
+	rm -rf test.o potential.o test
