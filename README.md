@@ -24,4 +24,4 @@ Run a file `viewer.py` in the folder `/veaw` to visualize the results. The depen
 
 ## How to run the tests
 
-We need to build test file `make -f MakefileTests`. As a result of this we can run executable file `tests`.
+We need to build test file `make -f MakefileTests`. As a result of it we can run executable file `test`.
