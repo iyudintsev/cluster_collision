@@ -18,7 +18,7 @@ Firstly, we need to download and extract Eigen library it in the project folder.
 
 After that to build a project using `make`. The result of this is executable file `model`.
 
-Run a file `viewer.py` in the folder `/veaw` to visualize the results. The dependencies are librarues `numpy` and `matplotlib`.
+Run a file `viewer.py` in the folder `/veaw` to visualize the results. The dependencies are libraries `numpy` and `matplotlib`.
 
 `python3 viewer.py`
 
