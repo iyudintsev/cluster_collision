@@ -2,7 +2,7 @@
 
 This is a simple problem of Molecular Dynamics. Suppose we have a cub area with periodic boundary conditions 
 which contains two clusters of particles.
-Two clusters move to each other and a collision occurs. We choose Lennard Jones Potential of interaction between particles and use Verlet integration to simulate the dynamics of the system.
+Two clusters move to each other and a collision occurs. We choose Lennard Jones Potential to implement interaction between particles and use Verlet integration to simulate the dynamics of the system.
 
 Besides, we use the method of neighbors search to optimize the calculations.
 
