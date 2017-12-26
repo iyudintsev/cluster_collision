@@ -43,14 +43,14 @@ Model::Model(double L0, int cell_num0, double h0, int num_threads0){
 	distances[3] = cell_num * cell_num;
 
 	num_threads = num_threads0;
-	if (num_threads > 0){
-		Nth = N / num_threads;
-	}
 }
 
 
 Model::~Model(){
 	delete[] distances;
+	if (num_threads > 0){
+		delete[] borders;
+	}
 }
 
 
@@ -116,6 +116,17 @@ int Model::findCell(Vector3d r){
 }
 
 
+void Model::initThreads(){
+	if (num_threads > 0){
+		Nth = N / num_threads;
+		borders = new int[num_threads+1];
+		borders[num_threads] = N;
+		for (int i=0; i < num_threads; i++){
+			borders[i] = i * Nth;
+		}
+	}
+}
+
 void Model::init(int n, const vector<Vector3d>& coordinates,
 			     const vector<Vector3d>& velocity, 
 			     const vector<double>& mass){
@@ -129,6 +140,7 @@ void Model::init(int n, const vector<Vector3d>& coordinates,
 	ofstream dump_file;
 	dump_file.open(data_file);
 	dump_file.close();
+	initThreads();
 }
 
 
@@ -148,7 +160,6 @@ void Model::calcForcesWithThreads(int ibeg, int iend){
 			}
 		}
 	}
-	cout << "done\n";
 }
 
 void Model::calcForcesWithoutThreads(){
@@ -172,11 +183,9 @@ void Model::calcForces(){
 	if (num_threads > 0){
 		thread workers[num_threads];
 		for(int i=0; i < num_threads; i++){
-			int ibeg = i*Nth;
-			int iend = (i == num_threads - 1) ? N : (i+1)*Nth;
-			workers[i] = thread(&Model::calcForcesWithThreads, this, ibeg, iend);
+			workers[i] = thread(&Model::calcForcesWithThreads, this, borders[i], borders[i+1]);
 		}
-
+		
 		for(int i=0; i < num_threads; i++){
 			workers[i].join();
 		}

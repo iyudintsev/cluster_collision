@@ -41,6 +41,7 @@ class Model{
 		   h, h2_2, h_2;
 	int N, cell_num, num_threads, Nth;
 	int * distances;
+	int * borders;
 	LennardJonesModel lg;
 	vector<Particle> particles;
 
@@ -62,6 +63,7 @@ public:
 	void init(int n, const vector<Vector3d>& coordinates,
 			  const vector<Vector3d>& velocity, 
 			  const vector<double>& mass);
+	void initThreads();
 	
 	void updateCoordinate(Particle & p);
 	void calcForces();
