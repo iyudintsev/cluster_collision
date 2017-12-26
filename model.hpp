@@ -10,8 +10,8 @@ using namespace Eigen;
 
 
 class Particle{
-	vector<Particle*> neighbors;
 public:
+	vector<Particle*> neighbors;
 	int id;
 	double m;
 	Vector3d r, r0, f, v;

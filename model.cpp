@@ -139,13 +139,11 @@ void Model::calcForces(){
 
 	for(int i = 0; i < N; i++){
 		Particle & pi = particles[i];
-		for(int j = i+1; j < N; j++){
-			Particle & pj = particles[j];
-			Vector3d dr = pi.r - pj.r;
+		for(Particle * pj : pi.neighbors){
+			Vector3d dr = pi.r - pj->r;
 			for (Vector3d& refl: reflection){
 				Vector3d force = lg.calcForce(dr+refl);
 				pi.f += force;
-				pj.f -= force;
 			}
 		}
 	}
