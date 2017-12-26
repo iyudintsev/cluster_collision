@@ -5,29 +5,29 @@
 #include <random>
 
 
-void Model::initRefl(int l_size){
+void Model::initRefl(int L0){
 	reflection.push_back(Vector3d::Zero());
 	for(int i = 0; i < 3; i++){
 		for (int j = -1; j < 2; j++){
 			if (j == 0) continue;
 			Vector3d refl(0,0,0);
-			refl(i) = j * l_size;
+			refl(i) = j * L0;
 			reflection.push_back(refl);
 		}
 	}
 }
 
 
-Model::Model(double l_size, int cell_number, double step){
-	L = l_size;
-	initRefl(l_size);
+Model::Model(double L0, int cell_num0, double h0, int num_threads0){
+	L = L0;
+	initRefl(L0);
 
-	h = step;
+	h = h0;
 	h2_2 = h * h / 2;
 	h_2 = .5 * h;
 
 	N = 0;
-	cell_num = cell_number;
+	cell_num = cell_num0;
 	cell_len = L / cell_num;
 
 	double g = 1;
@@ -41,6 +41,11 @@ Model::Model(double l_size, int cell_number, double step){
 	distances[1] = 1;
 	distances[2] = cell_num;
 	distances[3] = cell_num * cell_num;
+
+	num_threads = num_threads0;
+	if (num_threads > 0){
+		Nth = N / num_threads;
+	}
 }
 
 
@@ -132,11 +137,21 @@ void Model::updateCoordinate(Particle & p){
 }
 
 
-void Model::calcForces(){
-	for(Particle& p: particles){
-		p.f.setZero();
+void Model::calcForcesWithThreads(int ibeg, int iend){
+	for(int i = ibeg; i < iend; i++){
+		Particle & pi = particles[i];
+		for(Particle * pj : pi.neighbors){
+			Vector3d dr = pi.r - pj->r;
+			for (Vector3d& refl: reflection){
+				Vector3d force = lg.calcForce(dr+refl);
+				pi.f += force;
+			}
+		}
 	}
+	cout << "done\n";
+}
 
+void Model::calcForcesWithoutThreads(){
 	for(int i = 0; i < N; i++){
 		Particle & pi = particles[i];
 		for(Particle * pj : pi.neighbors){
@@ -146,6 +161,28 @@ void Model::calcForces(){
 				pi.f += force;
 			}
 		}
+	}
+}
+
+
+void Model::calcForces(){
+	for(Particle& p: particles){
+		p.f.setZero();
+	}
+	if (num_threads > 0){
+		thread workers[num_threads];
+		for(int i=0; i < num_threads; i++){
+			int ibeg = i*Nth;
+			int iend = (i == num_threads - 1) ? N : (i+1)*Nth;
+			workers[i] = thread(&Model::calcForcesWithThreads, this, ibeg, iend);
+		}
+
+		for(int i=0; i < num_threads; i++){
+			workers[i].join();
+		}
+	}
+	else{
+		calcForcesWithoutThreads();
 	}
 }
 

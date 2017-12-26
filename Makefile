@@ -1,10 +1,10 @@
 CC=g++
-CFLAGS=-c -Wall -I. -std=c++11
+CFLAGS=-c -pthread -Wall -I. -std=c++11
 
 all: model
 
 model: main.o model.o potential.o
-	$(CC) main.o model.o potential.o -o model
+	$(CC) -pthread -o model main.o model.o potential.o 
 
 model.o: model.cpp
 	$(CC) $(CFLAGS) model.cpp

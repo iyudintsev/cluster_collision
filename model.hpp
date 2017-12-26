@@ -2,6 +2,7 @@
 #define model_hpp
 #include<vector>
 #include<string>
+#include<thread>
 #include "Eigen/Eigen/Dense"
 #include "potential.hpp"
 
@@ -25,7 +26,7 @@ public:
 		id = ID;
 	}
 
-	void addNeighbor(Particle* p){
+	void addNeighbor(Particle * p){
 		neighbors.push_back(p);
 	}
 
@@ -38,7 +39,7 @@ public:
 class Model{
 	double L, cell_len, 
 		   h, h2_2, h_2;
-	int N, cell_num;
+	int N, cell_num, num_threads, Nth;
 	int * distances;
 	LennardJonesModel lg;
 	vector<Particle> particles;
@@ -49,7 +50,7 @@ public:
 	double min_dist;
 	double Upot, Ukin;
 
-	Model(double l_size, int cell_number, double step);
+	Model(double l_size, int cell_number, double step, int nthreads);
 	~Model();
 
 	void initRefl(int l_size);
@@ -64,6 +65,8 @@ public:
 	
 	void updateCoordinate(Particle & p);
 	void calcForces();
+	void calcForcesWithoutThreads();
+	void calcForcesWithThreads(int ibeg, int iend);
 	void updateSpeed(Particle & p, const Vector3d & f0);
 	void algStep();
 	void run(int number_of_steps, int neighbors_count, int dump_num);
