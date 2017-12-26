@@ -11,7 +11,7 @@ def main():
 			parse_line = line.split(' ')
 			data.append((getInt(parse_line[2]), 
 						 getInt(parse_line[3])))
-	data = zip(*data)
+	data = list(zip(*data))
 	plt.plot(data[0], data[1], marker='o')
 	plt.show()
 
