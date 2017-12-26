@@ -162,6 +162,7 @@ void Model::calcForcesWithThreads(int ibeg, int iend){
 	}
 }
 
+
 void Model::calcForcesWithoutThreads(){
 	for(int i = 0; i < N; i++){
 		Particle & pi = particles[i];
@@ -185,7 +186,7 @@ void Model::calcForces(){
 		for(int i=0; i < num_threads; i++){
 			workers[i] = thread(&Model::calcForcesWithThreads, this, borders[i], borders[i+1]);
 		}
-		
+
 		for(int i=0; i < num_threads; i++){
 			workers[i].join();
 		}
