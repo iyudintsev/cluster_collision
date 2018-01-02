@@ -2,7 +2,13 @@
 #include <stdlib.h>
 #include <math.h>
 #include <fstream>
+#include <ctime>
 #include <random>
+#define MASTER 0
+#define FROM_MASTER 1
+#define FROM_WORKER 2
+
+MPI_Status status;
 
 
 void Model::initRefl(int l_size){
@@ -46,6 +52,7 @@ Model::Model(double l_size, int cell_number, double step){
 
 Model::~Model(){
 	delete[] distances;
+	delete[] borders;
 }
 
 
@@ -119,11 +126,28 @@ void Model::init(int n, const vector<Vector3d>& coordinates,
 		r = periodicBoundCond(r);
 		createParticle(r, velocity[i], mass[i]);
 	}
-	updateNeighbors();
+	// updateNeighbors();
+}
 
-	ofstream dump_file;
-	dump_file.open(data_file);
-	dump_file.close();
+
+void Model::convertCoordinates(double * coor){
+	for (int i=0; i<N; i++){
+		Particle & pi = particles[i];
+		for (int j=0; j<3; j++){
+			pi.r(j) = coor[3*i + j];
+		}
+	}
+}
+
+
+void Model::convertForces(double * forces, int worker){
+	int i0 = borders[worker-1];
+	for (int i=i0; i<borders[worker]; i++){
+		Particle & pi = particles[i];
+		for (int j=0; j<3; j++){
+			pi.f(j) = forces[3 * (i - i0)+j];
+		}
+	}
 }
 
 
@@ -132,20 +156,19 @@ void Model::updateCoordinate(Particle & p){
 }
 
 
-void Model::calcForces(){
+void Model::calcForces(int ibeg, int iend){
 	for(Particle& p: particles){
 		p.f.setZero();
 	}
-
-	for(int i = 0; i < N; i++){
+	for(int i = ibeg; i < iend; i++){
 		Particle & pi = particles[i];
-		for(int j = i+1; j < N; j++){
+		for(int j = 0; j < N; j++){
+			if (i == j) continue;
 			Particle & pj = particles[j];
 			Vector3d dr = pi.r - pj.r;
 			for (Vector3d& refl: reflection){
 				Vector3d force = lg.calcForce(dr+refl);
 				pi.f += force;
-				pj.f -= force;
 			}
 		}
 	}
@@ -157,44 +180,101 @@ void Model::updateSpeed(Particle & p, const Vector3d & f0){
 }
 
 
-void Model::algStep(){
-	vector<Vector3d> forces;
-	for(Particle & p: particles){
-		updateCoordinate(p);
-		forces.push_back(p.f);
+void Model::run(int number_of_steps, int dump_num){
+	time_t t0, t1;
+	t0 = time(NULL);
+
+	int taskid, numtasks;
+	MPI_Init(NULL, NULL);
+	MPI_Comm_rank(MPI_COMM_WORLD,&taskid);
+	MPI_Comm_size(MPI_COMM_WORLD,&numtasks);
+	int numworkers = numtasks-1;
+
+	int Nth = N / numworkers;
+	borders = new int[numworkers + 1];
+	borders[numworkers] = N;
+	for (int i=0; i < numworkers; i++){
+		borders[i] = i * Nth;
 	}
-	calcForces();
-	for (int i = 0; i < N; i++){
-		Particle & p = particles[i];
-		updateSpeed(p, forces[i]);
-	}
-}
 
 
-void Model::run(int number_of_steps, int neighbors_count, int dump_num){
+	// if (taskid == MASTER){
+		// cout << "Number of particles: " << N << endl;
+	// }
+
 	for (int num_step = 1; num_step <= number_of_steps; num_step++){
-		if (num_step % neighbors_count == 0){
-			updateNeighbors();
-		}
-		if (num_step % dump_num == 0){
-			cout << "Step: " << num_step << endl;
-			dumpCoordinates();
-		}
+		vector<Vector3d> forces;
+		double coor[3*N];
 
-		algStep();
-		for (Particle& p: particles){
-			p.r = periodicBoundCond(p.r);
+		if (taskid == MASTER){
+			if (num_step % dump_num == 0){
+				cout << "Step: " << num_step << endl;
+				// dumpCoordinates();
+			}
+
+			for(Particle & p: particles){
+				updateCoordinate(p);
+				p.r = periodicBoundCond(p.r);
+				forces.push_back(p.f);
+			}
+
+			for (int i=0; i<N; i++){
+				Particle & pi = particles[i];
+				for (int j=0; j<3; j++){
+					coor[3*i+j] = pi.r(j);
+				}
+			}
+
+			for (int worker=1; worker <= numworkers; worker++){
+				MPI_Send(&coor, 3*N, MPI_DOUBLE, worker, FROM_MASTER, MPI_COMM_WORLD);
+			}
+
+			for (int worker=1; worker <= numworkers; worker++){
+				int n = borders[worker]	- borders[worker-1];
+				double lforces[3*n];
+				MPI_Recv(&lforces, 3*n, MPI_DOUBLE, worker, FROM_WORKER, MPI_COMM_WORLD, &status);
+				convertForces(lforces, worker);						
+			}			
+			
+			for (int i = 0; i < N; i++){
+				Particle & p = particles[i];
+				updateSpeed(p, forces[i]);
+			}
+		}
+		
+		if (taskid != MASTER){
+			MPI_Recv(&coor, 3*N, MPI_DOUBLE, MASTER, FROM_MASTER, MPI_COMM_WORLD, &status);
+			convertCoordinates(coor);
+			calcForces(borders[taskid-1], borders[taskid]);
+
+			int n = borders[taskid]	- borders[taskid-1];
+			double lforces[3*n];
+			int i0 = borders[taskid-1];
+			for (int i=i0; i<borders[taskid]; i++){
+				Particle & pi = particles[i];
+				for (int j=0; j<3; j++)
+					lforces[3 * (i - i0) + j] = pi.f(j);
+			}
+			MPI_Send(&lforces, 3*n, MPI_DOUBLE, MASTER, FROM_WORKER, MPI_COMM_WORLD);
 		}
 	}
+
+	MPI_Finalize();
+	t1 = time(NULL);
+	cout << "t=" << t1-t0 << endl;
 }
 
 
 void Model::dumpCoordinates(){
-	ofstream dump_file;
-	dump_file.open(data_file, fstream::app);
+	// ofstream dump_file;
+	// dump_file.open(data_file, fstream::app);
+	// for (Particle& p: particles){
+	// 	dump_file << p.r.transpose() << endl;
+	// }
+	// dump_file << "next" << endl;
+	// dump_file.close();
 	for (Particle& p: particles){
-		dump_file << p.r.transpose() << endl;
+		cout << p.r.transpose() << endl;
 	}
-	dump_file << "next" << endl;
-	dump_file.close();
+	cout << "next" << endl;
 }

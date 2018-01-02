@@ -10,9 +10,8 @@ void clusterCollision(){
 	generator.run(Vector3d(3, 8, 8), Vector3d(2, 0, 0), 1);
 
 	int size = generator.get_size();
-	cout << "Number of particles: " << size << endl;
 	model.init(size, generator.coordinates, generator.velocity, generator.mass);
-	model.run(1500, 20, 20);
+	model.run(100, 20);
 }
 
 

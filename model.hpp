@@ -1,7 +1,8 @@
 #ifndef model_hpp
 #define model_hpp
-#include<vector>
-#include<string>
+#include <vector>
+#include <string>
+#include <mpi.h>
 #include "Eigen/Eigen/Dense"
 #include "potential.hpp"
 
@@ -45,6 +46,7 @@ class Model{
 
 	vector<Vector3d> reflection;
 	string data_file;
+	int * borders;
 public:
 	double min_dist;
 	double Upot, Ukin;
@@ -63,10 +65,11 @@ public:
 			  const vector<double>& mass);
 	
 	void updateCoordinate(Particle & p);
-	void calcForces();
+	void convertCoordinates(double * coor);
+	void convertForces(double * forces, int worker);
+	void calcForces(int ibeg, int iend);
 	void updateSpeed(Particle & p, const Vector3d & f0);
-	void algStep();
-	void run(int number_of_steps, int neighbors_count, int dump_num);
+	void run(int number_of_steps, int dump_num);
 	void dumpCoordinates();
 
 	void calcEnergy();  // need to implement

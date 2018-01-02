@@ -1,4 +1,4 @@
-CC=g++
+CC=mpic++
 CFLAGS=-c -Wall -I. -std=c++11
 
 all: model
