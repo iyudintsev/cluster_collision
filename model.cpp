@@ -126,7 +126,6 @@ void Model::init(int n, const vector<Vector3d>& coordinates,
 		r = periodicBoundCond(r);
 		createParticle(r, velocity[i], mass[i]);
 	}
-	// updateNeighbors();
 }
 
 
@@ -197,11 +196,6 @@ void Model::run(int number_of_steps, int dump_num){
 		borders[i] = i * Nth;
 	}
 
-
-	// if (taskid == MASTER){
-		// cout << "Number of particles: " << N << endl;
-	// }
-
 	for (int num_step = 1; num_step <= number_of_steps; num_step++){
 		vector<Vector3d> forces;
 		double coor[3*N];
@@ -209,7 +203,6 @@ void Model::run(int number_of_steps, int dump_num){
 		if (taskid == MASTER){
 			if (num_step % dump_num == 0){
 				cout << "Step: " << num_step << endl;
-				// dumpCoordinates();
 			}
 
 			for(Particle & p: particles){
@@ -259,22 +252,10 @@ void Model::run(int number_of_steps, int dump_num){
 		}
 	}
 
-	MPI_Finalize();
-	t1 = time(NULL);
-	cout << "t=" << t1-t0 << endl;
-}
-
-
-void Model::dumpCoordinates(){
-	// ofstream dump_file;
-	// dump_file.open(data_file, fstream::app);
-	// for (Particle& p: particles){
-	// 	dump_file << p.r.transpose() << endl;
-	// }
-	// dump_file << "next" << endl;
-	// dump_file.close();
-	for (Particle& p: particles){
-		cout << p.r.transpose() << endl;
+	if (taskid == MASTER){
+		t1 = time(NULL);
+		cout << "t=" << t1-t0 << endl;
 	}
-	cout << "next" << endl;
+
+	MPI_Finalize();
 }
