@@ -11,7 +11,7 @@ void clusterCollision(){
 
 	int size = generator.get_size();
 	model.init(size, generator.coordinates, generator.velocity, generator.mass);
-	model.run(300, 20);
+	model.run(50, 20);
 }
 
 
