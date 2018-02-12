@@ -16,7 +16,7 @@ void clusterCollision(int num_threads){
 	cout << "Number of particles: " << size << endl;
 	cout << "Number of threads: " << num_threads << endl;
 	model.init(size, generator.coordinates, generator.velocity, generator.mass);
-	model.run(300, 20, 20);
+	model.run(50, 20, 10);
 }
 
 
