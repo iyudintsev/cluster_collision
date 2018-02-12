@@ -139,13 +139,13 @@ void Model::calcForces(){
 
 	for(int i = 0; i < N; i++){
 		Particle & pi = particles[i];
-		for(int j = i+1; j < N; j++){
+		for(int j = 0; j < N; j++){
+			if (i == j) continue;
 			Particle & pj = particles[j];
 			Vector3d dr = pi.r - pj.r;
 			for (Vector3d& refl: reflection){
 				Vector3d force = lg.calcForce(dr+refl);
 				pi.f += force;
-				pj.f -= force;
 			}
 		}
 	}
@@ -173,9 +173,9 @@ void Model::algStep(){
 
 void Model::run(int number_of_steps, int neighbors_count, int dump_num){
 	for (int num_step = 1; num_step <= number_of_steps; num_step++){
-		if (num_step % neighbors_count == 0){
-			updateNeighbors();
-		}
+		// if (num_step % neighbors_count == 0){
+			// updateNeighbors();
+		// }
 		if (num_step % dump_num == 0){
 			cout << "Step: " << num_step << endl;
 			dumpCoordinates();

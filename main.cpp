@@ -13,7 +13,7 @@ void clusterCollision(){
 	int size = generator.get_size();
 	cout << "Number of particles: " << size << endl;
 	model.init(size, generator.coordinates, generator.velocity, generator.mass);
-	model.run(300, 20, 20);
+	model.run(50, 20, 10);
 }
 
 
