@@ -4,7 +4,7 @@ This service helps sovling the problem of Molecular Dynamics. Suppose we have a 
 This area contains two clusters of particles.
 Two clusters move to each other and a collision occurs. We choose Lennard Jones Potential to implement interaction between particles and use Verlet integration to simulate the dynamics of the system.
 
-Besides, we use the method of neighbors search to optimize the calculations.
+We use different high-performance computing methods to speed up computations.
 
 ## How to run the simulation
 
